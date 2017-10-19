@@ -1,6 +1,7 @@
 package com.gudden.maven.model;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 public class PositionalPosting {
@@ -13,6 +14,13 @@ public class PositionalPosting {
 	public PositionalPosting(int id) {
 		this.id = id;
 		this.positions = new ArrayList<Integer>();
+	}
+	
+	// ------------------------------------------------------------------------------------------------------
+
+	public PositionalPosting(int id, List<Integer> positions) {
+		this.id = id;
+		this.positions = positions;
 	}
 
 	// ------------------------------------------------------------------------------------------------------
@@ -31,6 +39,16 @@ public class PositionalPosting {
 
 	public List<Integer> getPositions() {
 		return this.positions;
+	}
+	
+	// ------------------------------------------------------------------------------------------------------
+	
+	public PositionalPosting merge(PositionalPosting other) {
+		List<Integer> mergedPositions = new ArrayList<Integer>();
+		mergedPositions.addAll(this.positions);
+		mergedPositions.addAll(other.getPositions());
+		Collections.sort(mergedPositions, Collections.reverseOrder());
+		return new PositionalPosting(this.id, mergedPositions);
 	}
 
 	// ------------------------------------------------------------------------------------------------------

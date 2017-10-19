@@ -17,6 +17,9 @@ import com.gudden.maven.model.Query;
 public class App {
 	private static final Guddengine GUDDEN = new Guddengine();
 	private static List<String> FILE_NAMES = null;
+	
+	// ------------------------------------------------------------------------------------------------------
+	
 	public static void main(String[] args) {
 
 		Scanner sc = new Scanner(System.in);
@@ -49,6 +52,8 @@ public class App {
 			}
 		}
 	}
+
+	// ------------------------------------------------------------------------------------------------------
 	
 	private static void search(String queryString) {
 		Query query = new Query(queryString);
@@ -64,6 +69,8 @@ public class App {
 			System.out.println("Size: " + resultId.size());
 		}
 	}
+	
+	// ------------------------------------------------------------------------------------------------------
 	
 	private static List<String> indexDirectory(Guddengine engine, String path) {
 		System.out.println("Indexing the new path at \"" + path + "\"");

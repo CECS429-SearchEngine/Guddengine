@@ -21,7 +21,10 @@ public class Guddengine {
 	private PositionalInvertedIndex PII;
 	private KGramIndex KGI;
 	private Normalizer NORM;
+
+	// ------------------------------------------------------------------------------------------------------
 	
+	/** Creates a new instance of Guddengine. */
 	public Guddengine() {
 		this.PII = new PositionalInvertedIndex();
 		this.KGI = new KGramIndex();
@@ -30,10 +33,11 @@ public class Guddengine {
 
 	// ------------------------------------------------------------------------------------------------------
 	
+	/** Returns the file names that has been added from indexing the file that were in the given path. */
 	public List<String> indexDirectory(String path) throws IOException {
 		final Path currentWorkingPath = Paths.get(path).toAbsolutePath();
 
-		// the list of file names that were processed
+		// the list of file names that were processed.
 		List<String> fileNames = new ArrayList<String>();
 
 		// This is our standard "walk through all .json files" code.
@@ -54,12 +58,12 @@ public class Guddengine {
 					// we have found a .json file; add its name to the fileName list,
 					// then index the file and increase the document ID counter.
 					fileNames.add(file.getFileName().toString());
-					indexFile(file.toFile(), documentID++);
+					addTokens(file.toFile(), documentID++);
 				}
 				return FileVisitResult.CONTINUE;
 			}
 
-			// don't throw exceptions if files are locked/other errors occur
+			// don't throw exceptions if files are locked/other errors occur.
 			public FileVisitResult visitFileFailed(Path file, IOException e) {
 				return FileVisitResult.CONTINUE;
 			}
@@ -69,6 +73,7 @@ public class Guddengine {
 	
 	// ------------------------------------------------------------------------------------------------------
 	
+	/** Remove all the terms and types that have been indexed. */
 	public void resetIndex() {
 		this.PII.resetIndex();
 		this.KGI.resetIndex();
@@ -76,8 +81,11 @@ public class Guddengine {
 	
 	// ------------------------------------------------------------------------------------------------------
 	
+	/** Returns the merged result of the query that has been provided.. */
 	public List<PositionalPosting> search(Query query) {
 		List<SubQuery> subQueries = query.getSubQueries();
+		
+		// process each sub-query and union their results.
 		List<PositionalPosting> result = processSubQuery(subQueries.get(0));
 		for (int i = 1; i < subQueries.size(); i++) {
 			result = union(result, processSubQuery(subQueries.get(i)));
@@ -87,12 +95,14 @@ public class Guddengine {
 	
 	// ------------------------------------------------------------------------------------------------------
 	
+	/** Returns the String that has been stemmed. */
 	public String stemToken(String token) {
 		return this.NORM.stem(token);
 	}
 
 	// ------------------------------------------------------------------------------------------------------
 	
+	/** Returns an array of String containing terms that have been added into the positional inverted index */
 	public String[] vocabulary() {
 		return PII.getDictionary();
 	}
@@ -135,25 +145,27 @@ public class Guddengine {
 	}
 	
 	// ------------------------------------------------------------------------------------------------------
-
-	private void indexFile(File file, int docId) {
+	
+	private void addTokens(File file, int docId) {
 		DocumentTokenStream dp = new DocumentTokenStream(file);
-		int position = 0;
+		int position = 0;	// keep track of the positions for each token.
 		while (dp.hasNextToken()) {
-			String term = dp.nextToken();
-			if (term == null) continue;
-			term = this.NORM.normalize(term);
-			if (term.contains("-")) {
-				Set<String> terms = this.NORM.splitHypenWords(term);
-				for (String each : terms) {
+			String type = dp.nextToken();
+			if (type == null) continue;	// skip the proceeding instructions if the term is an empty string.
+			type = this.NORM.normalize(type);
+			if (type.contains("-")) {
+				// We separate the hyphened type to create a set types that will be added into the index.
+				Set<String> types = this.NORM.splitHypenWords(type);
+				for (String each : types) {
 					this.KGI.add(each);
-					this.PII.add(this.NORM.stem(term), docId, position);
+					this.PII.add(this.NORM.stem(each), docId, position);
 				}
 			} else {
-				this.KGI.add(term);
-				this.PII.add(this.NORM.stem(term), docId, position);
+				// Add the type to the KGramIndex and the term (stemmed type) into the PositionalInvertedIndex
+				this.KGI.add(type);
+				this.PII.add(this.NORM.stem(type), docId, position);
 			}
-			position++;
+			position++;	// Increment for each token.
 		}
 	}
 	
@@ -179,6 +191,7 @@ public class Guddengine {
 	// ------------------------------------------------------------------------------------------------------
 	
 	private List<PositionalPosting> intersect(List<PositionalPosting> current, List<PositionalPosting> other) {
+		// Intersection of a set with an empty set is empty.
 		if (current == null || other == null) return null;
 		List<PositionalPosting> result = new ArrayList<PositionalPosting>();
 		int i = 0, j = 0;
@@ -187,11 +200,16 @@ public class Guddengine {
 			int otherId = other.get(j).getId();
 			if (currentId == otherId) {
 				result.add(new PositionalPosting(currentId));
+				
+				// increment both indexes since the document that had the same ID were checked.
 				i++;
 				j++;
 			} else if (currentId < otherId) {
+				// increment the index for current since current document ID was less than other document ID
 				i++;
 			} else {
+				// similarly we increment the index for other since other document ID was less than current
+				// document id.
 				j++;
 			}
 		}
@@ -265,9 +283,8 @@ public class Guddengine {
 	private List<PositionalPosting> processSubQuery(SubQuery subQuery) {
 		List<String> literals = subQuery.getLiterals();
 		List<List<PositionalPosting>> result = new ArrayList<List<PositionalPosting>>();
-		for (int i = 0; i < literals.size(); i++) {
-			result.add(processLiteral(literals.get(i)));
-		}
+		for (String each : literals)
+			result.add(processLiteral(each));
 		return intersect(result);
 	}
 	
@@ -294,13 +311,15 @@ public class Guddengine {
 	// ------------------------------------------------------------------------------------------------------
 	
 	private List<PositionalPosting> processNearQuery(String[] literals) {
+		// find the index of the first occurrence of the "near/\\d."
 		int nearLiteral = findNearLiteral(literals);
 		int k = Integer.parseInt(literals[nearLiteral].split("/")[1]);
+		
+		// reconstruct the literals that occurred before and after "near/\\d".
 		String thisLiteral = reconstructLiteral(0, nearLiteral, literals);
 		String otherLiteral = reconstructLiteral(nearLiteral + 1, literals.length, literals);
-		if (k == 1 && !(thisLiteral.contains("*") || otherLiteral.contains("*"))) {
-			return processLiteral(thisLiteral + " " + otherLiteral);
-		}
+		
+		// Recursively process the reconstructed literals and do the positional Intersect.
 		List<PositionalPosting> thisPosting = processLiteral(thisLiteral);
 		List<PositionalPosting> otherPosting = processLiteral(otherLiteral);
 		return positionalIntersect(thisPosting, otherPosting, k);
@@ -310,14 +329,19 @@ public class Guddengine {
 	
 	private List<PositionalPosting> processGramQuery(String literal) {
 		List<PositionalPosting> result = null;
-		String[] grams = literal.split("\\*");	// grams are separated by *
+		
+		// Split the grams to search for the gram that start before and/or after *.
+		String[] grams = literal.split("\\*");
 		String originalRegex = String.join(".*", grams).replaceAll("\\$", "");
-		SortedSet<String> types = getTypes(grams); // Types that were retrieved from the KGramIndex.
+		SortedSet<String> types = getTypes(grams);
 		if (!types.isEmpty()) {
 			for (String each : types) {
 				if (result != null && each.matches(originalRegex)) {
+					// Since result is not empty, we need to set result to be the union of the current result
+					// and the result of the type.
 					result = union(result, processLiteral(each));
 				} else if (each.matches(originalRegex)) {
+					// Since result is empty, we set result the type that we will process for the literal.
 					result = processLiteral(each);
 				}
 			}
@@ -367,20 +391,16 @@ public class Guddengine {
 			if (currentId == otherId) {
 				// Add only one PositionalPosting since they are the same. Then increment both the current
 				// and other indexes to compare the postings from the next elements.
-				result.add(current.get(i));
-				i++;	
-				j++;	
+				result.add(current.get(i++).merge(other.get(j++)));
 			} else if (j < other.size() && currentId > otherId) {
 				// Add the PositionalPosting from other since we know that the current document ID is
 				// greater than the other document ID. And we increment the index j to get the next item for
 				// other.
-				result.add(other.get(j));
-				j++;
+				result.add(other.get(j++));
 			} else if (i < current.size() && currentId < otherId) {
 				// Similarly we do this for Postings when current document ID is less than the other
 				// document ID. 
-				result.add(current.get(i));
-				i++;
+				result.add(current.get(i++));
 			}
 		}
 		

@@ -1,13 +1,7 @@
 package com.gudden.maven.model;
 
-import java.util.Map;
-
 public abstract class Index <T> {
 
-	protected Map<String, T> index;
-
-	// ------------------------------------------------------------------------------------------------------
-	
 	public abstract String[] getDictionary();
 
 	// ------------------------------------------------------------------------------------------------------

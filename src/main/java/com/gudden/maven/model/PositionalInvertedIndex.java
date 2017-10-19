@@ -3,23 +3,28 @@ package com.gudden.maven.model;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.SortedSet;
 import java.util.TreeSet;
 
 public class PositionalInvertedIndex extends Index<List<PositionalPosting>> {
 
+	private Map<String, List<PositionalPosting>> index;
+	
+	// ------------------------------------------------------------------------------------------------------
+	
 	public PositionalInvertedIndex() {
 		this.index = new HashMap<String, List<PositionalPosting>>();
 	}
 
 	// ------------------------------------------------------------------------------------------------------
 
-	public void add(String token, int id, int position) {
-		if (!contains(token))
-			createPosting(token);
-		if (!contains(token, id))
-			addPosting(token, id);
-		PositionalPosting posting = getLatestPosting(getPostings(token));
+	public void add(String term, int id, int position) {
+		if (!contains(term))
+			createPosting(term);
+		if (!contains(term, id))
+			addPosting(term, id);
+		PositionalPosting posting = getLatestPosting(getPostings(term));
 		posting.addPosition(position);
 	}
 
@@ -34,8 +39,8 @@ public class PositionalInvertedIndex extends Index<List<PositionalPosting>> {
 	// ------------------------------------------------------------------------------------------------------
 
 	@Override
-	public List<PositionalPosting> getPostings(String token) {
-		return this.index.get(token);
+	public List<PositionalPosting> getPostings(String term) {
+		return this.index.get(term);
 	}
 
 	// ------------------------------------------------------------------------------------------------------
@@ -55,27 +60,27 @@ public class PositionalInvertedIndex extends Index<List<PositionalPosting>> {
 	// ------------------------------------------------------------------------------------------------------
 
 	@Override
-	protected boolean contains(String token) {
-		return this.index.containsKey(token);
+	protected boolean contains(String term) {
+		return this.index.containsKey(term);
 	}
 
 	// ------------------------------------------------------------------------------------------------------
 
 	@Override
-	protected void createPosting(String token) {
-		this.index.put(token, new ArrayList<PositionalPosting>());
+	protected void createPosting(String term) {
+		this.index.put(term, new ArrayList<PositionalPosting>());
 	}
 
 	// ------------------------------------------------------------------------------------------------------
 
-	private void addPosting(String token, int id) {
-		getPostings(token).add(new PositionalPosting(id));
+	private void addPosting(String term, int id) {
+		getPostings(term).add(new PositionalPosting(id));
 	}
 
 	// ------------------------------------------------------------------------------------------------------
 
-	private boolean contains(String token, int id) {
-		List<PositionalPosting> postings = getPostings(token);
+	private boolean contains(String term, int id) {
+		List<PositionalPosting> postings = getPostings(term);
 		return !postings.isEmpty() && getLatestPosting(postings).getId() >= id;
 	}
 
