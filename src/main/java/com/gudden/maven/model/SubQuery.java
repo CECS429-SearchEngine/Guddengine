@@ -41,9 +41,7 @@ public class SubQuery {
 		// gets words that are either separated by space or ecased in quotes.
 		while (m.find()) {
 			String literal = m.group(1);
-			if (literal.contains("*")) {
-				tempLiterals.add(createWildCardLiteral(literal));
-			} else if (literal.matches("near/\\d")) {
+			if (literal.matches("near/\\d")) {
 				if (m.find()) {
 					String near = createNearLiteral(tempLiterals.remove(tempLiterals.size() - 1), 
 												   literal, m.group(1));
@@ -52,7 +50,9 @@ public class SubQuery {
 					throw new IllegalStateException("Illegal Near Query against empty string.");
 				}
 			} else if (literal.matches("^\".*\"$")) {
-				tempLiterals.add(literal.substring(1, literal.length() - 1));
+				tempLiterals.add(String.join(" ", createLiterals(literal.substring(1, literal.length() - 1))));
+			} else if (literal.contains("*")) {
+				tempLiterals.add(createWildCardLiteral(literal));
 			} else {
 				tempLiterals.add(literal);
 			}
@@ -69,13 +69,15 @@ public class SubQuery {
 		sb.append(near);
 		sb.append(" ");
 		if (other.matches("^\".*\"$")) {
-			sb.append(other.substring(1, other.length() - 1));
-		} else {
+			sb.append(String.join(" ", createLiterals(other.substring(1, other.length() - 1))));
+		} else if (other.contains("*")) {
+			sb.append(createWildCardLiteral(other));
+		 } else {
 			sb.append(other);
 		}
 		return sb.toString();
 	}
-	
+
 	// ------------------------------------------------------------------------------------------------------
 
 	private String createWildCardLiteral(String literal) {

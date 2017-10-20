@@ -6,18 +6,16 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.SortedSet;
-import java.util.TreeSet;
 
-public class KGramIndex extends Index<SortedSet<String>> {
+public class KGramIndex extends Index<Set<String>> {
 	
-	private Map<String, SortedSet<String>> index;
+	private Map<String, Set<String>> index;
 	private Set<String> termSet;
 	
 	// ------------------------------------------------------------------------------------------------------
 
 	public KGramIndex() {
-		this.index = new HashMap<String, SortedSet<String>>();
+		this.index = new HashMap<String, Set<String>>();
 		this.termSet = new HashSet<String>();
 	}
 
@@ -50,14 +48,14 @@ public class KGramIndex extends Index<SortedSet<String>> {
 
 	@Override
 	public String[] getDictionary() {
-		SortedSet<String> grams = new TreeSet<String>(this.index.keySet());
+		Set<String> grams = new HashSet<String>(this.index.keySet());
 		return grams.toArray(new String[grams.size()]);
 	}
 
 	// ------------------------------------------------------------------------------------------------------
 
 	@Override
-	public SortedSet<String> getPostings(String term) {
+	public Set<String> getPostings(String term) {
 		return this.index.get(term);
 	}
 
@@ -65,7 +63,7 @@ public class KGramIndex extends Index<SortedSet<String>> {
 
 	@Override
 	public void resetIndex() {
-		this.index = new HashMap<String, SortedSet<String>>();
+		this.index = new HashMap<String, Set<String>>();
 
 	}
 
@@ -107,7 +105,7 @@ public class KGramIndex extends Index<SortedSet<String>> {
 
 	@Override
 	protected void createPosting(String gram) {
-		this.index.put(gram, new TreeSet<String>());
+		this.index.put(gram, new HashSet<String>());
 	}
 	
 }

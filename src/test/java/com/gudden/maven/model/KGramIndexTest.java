@@ -48,9 +48,11 @@ public class KGramIndexTest {
 	public void testGetDictionary() {
 		String[] grams = {"h", "e", "l", "ll", "o", "$h", "he", "el",
 				         "lo", "o$", "$he", "hel", "ell", "llo", "lo$"};
+		String[] result = this.kgi.getDictionary();
 		Arrays.sort(grams);
-		assertTrue(Arrays.equals(this.kgi.getDictionary(), grams));
-		assertEquals("Dictionary must equal in length", this.kgi.getDictionary().length, grams.length);
+		Arrays.sort(result);
+		assertTrue(Arrays.equals(result, grams));
+		assertEquals("Dictionary must equal in length", result.length, grams.length);
 	}
 
 	// ------------------------------------------------------------------------------------------------------

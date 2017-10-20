@@ -11,10 +11,10 @@ import java.nio.file.attribute.BasicFileAttributes;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.SortedSet;
-import java.util.TreeSet;
 
 public class Guddengine {
 	
@@ -120,8 +120,8 @@ public class Guddengine {
 	
 	// ------------------------------------------------------------------------------------------------------
 	
-	private SortedSet<String> getTypes(String[] grams) {
-		SortedSet<String> result = new TreeSet<String>();
+	private Set<String> getTypes(String[] grams) {
+		Set<String> result = new HashSet<String>();
 		for (String each : grams) {
 			if (each.equals("$")) {
 				continue;
@@ -130,7 +130,7 @@ public class Guddengine {
 				// maximum of 3 grams in the KGramIndex.
 				List<String> subGrams = KGI.generateGrams(3,  each);
 				// recursively call processGrams to retrive the types for the subGrams. Union results.
-				SortedSet<String> resultSet = getTypes(subGrams.toArray(new String[subGrams.size()]));
+				Set<String> resultSet = getTypes(subGrams.toArray(new String[subGrams.size()]));
 				if (!result.isEmpty())
 					result.retainAll(resultSet);
 				else
@@ -333,7 +333,7 @@ public class Guddengine {
 		// Split the grams to search for the gram that start before and/or after *.
 		String[] grams = literal.split("\\*");
 		String originalRegex = String.join(".*", grams).replaceAll("\\$", "");
-		SortedSet<String> types = getTypes(grams);
+		Set<String> types = getTypes(grams);
 		if (!types.isEmpty()) {
 			for (String each : types) {
 				if (result != null && each.matches(originalRegex)) {
