@@ -1,6 +1,6 @@
 package com.gudden.maven.model;
 
-public abstract class Index <T> {
+public abstract class Index<T> {
 
 	public abstract String[] getDictionary();
 

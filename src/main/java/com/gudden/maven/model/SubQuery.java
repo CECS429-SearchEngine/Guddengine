@@ -38,7 +38,7 @@ public class SubQuery {
 		// \\s match zero or more white spaced
 		Matcher m = Pattern.compile("([^\"]\\S*|\".+?\")\\s*").matcher(subQuery);
 
-		// gets words that are either separated by space or ecased in quotes.
+		// gets words that are either separated by space or escape in quotes.
 		while (m.find()) {
 			String literal = m.group(1);
 			if (literal.matches("near/\\d")) {
