@@ -1,6 +1,7 @@
 package com.gudden.maven.model;
 
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.util.ArrayList;
@@ -9,36 +10,35 @@ import java.util.List;
 public class PositionalDiskInvertedIndex {
 	
 	public static void main(String[] args) {
-		try {
-			List<PositionalPosting> x = new PositionalDiskInvertedIndex("/Users/kuminin/Desktop/GuddenTheEngine/test").getPostings("the");
-			for (PositionalPosting s : x) {
-				System.out.println("Document Id: " + s.getId() + "\nScore: " + s.getScore());
-				System.out.print("Positions:");
-				for (int k : s.getPositions()) {
-					System.out.print(" " + k);
-				}
-				System.out.println("\n");
+		List<PositionalPosting> x = new PositionalDiskInvertedIndex("/Users/kuminin/Desktop/GuddenTheEngine/test").getPostings("the");
+		for (PositionalPosting s : x) {
+			System.out.println("Document Id: " + s.getId() + "\nScore: " + s.getScore());
+			System.out.print("Positions:");
+			for (int k : s.getPositions()) {
+				System.out.print(" " + k);
 			}
-		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+			System.out.println("\n");
 		}
 	}
 	
 	private long[] vocabTable;
 	private String path;
 	private RandomAccessFile vocabList;
-	private RandomAccessFile postings;
+	private RandomAccessFile vocabPostings;
 	private RandomAccessFile weights;
 	
 	// ------------------------------------------------------------------------------------------------------
 	
 	/** Opens a disk positional inverted index that was constructed in a give path. */
-	public PositionalDiskInvertedIndex (String path) throws IOException {
+	public PositionalDiskInvertedIndex (String path) {
 		this.path = path;
-		this.vocabList = new RandomAccessFile(new File(path, "bin/vocab.bin"), "r");
-		this.postings = new RandomAccessFile(new File(path, "bin/postings.bin"), "r");
-		this.weights = new RandomAccessFile(new File(path, "bin/docWeights.bin"), "r");
+		try {
+			this.vocabList = new RandomAccessFile(new File(path, "bin/vocab.bin"), "r");
+			this.postings = new RandomAccessFile(new File(path, "bin/postings.bin"), "r");
+			this.weights = new RandomAccessFile(new File(path, "bin/docWeights.bin"), "r");
+		} catch (FileNotFoundException e) {
+			System.out.println(e.toString());
+		}
 		this.vocabTable = readVocabTable(path);
 	}
 	
@@ -142,16 +142,16 @@ public class PositionalDiskInvertedIndex {
 	
 	private List<PositionalPosting> readPostingsFromFile(long postingsPosition) {
 		try {
-			this.postings.seek(postingsPosition);
+			this.vocabPostings.seek(postingsPosition);
 			int documentId = 0;
-			int documentFrequency = (int)decodeFile(this.postings);	
+			int documentFrequency = (int)decodeFile(this.vocabPostings);	
 			
 			List<PositionalPosting> postings = new ArrayList<PositionalPosting>(documentFrequency);
 			System.out.println(documentFrequency);
 			for (int i = 0; i < documentFrequency; i++) {
-				documentId += decodeFile(this.postings);
-				double score = this.postings.readDouble();
-				List<Integer> positions = readTermPositions(decodeFile(this.postings));
+				documentId += decodeFile(this.vocabPostings);
+				double score = this.vocabPostings.readDouble();
+				List<Integer> positions = readTermPositions(decodeFile(this.vocabPostings));
 				postings.add(new PositionalPosting(documentId, positions, score));
 				System.out.println(postings.get(postings.size() - 1));
 			}
@@ -166,7 +166,7 @@ public class PositionalDiskInvertedIndex {
 		int termPosition = 0;
 		List<Integer> positions = new ArrayList<Integer>();
 		for (int j = 0; j < termFrequency; j++) {
-			termPosition += (int)decodeFile(this.postings);
+			termPosition += (int)decodeFile(this.vocabPostings);
 			positions.add(termPosition);
 		}
 		return positions;
