@@ -34,7 +34,7 @@ public class PositionalDiskInvertedIndex {
 		this.path = path;
 		try {
 			this.vocabList = new RandomAccessFile(new File(path, "bin/vocab.bin"), "r");
-			this.postings = new RandomAccessFile(new File(path, "bin/postings.bin"), "r");
+			this.vocabPostings = new RandomAccessFile(new File(path, "bin/postings.bin"), "r");
 			this.weights = new RandomAccessFile(new File(path, "bin/docWeights.bin"), "r");
 		} catch (FileNotFoundException e) {
 			System.out.println(e.toString());
