@@ -1,13 +1,16 @@
 package com.gudden.maven.model;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.SortedSet;
+import java.util.TreeSet;
 
-public class KGramIndex extends Index<Set<String>> {
+public class KGramIndex extends Index<Set<String>> implements Serializable {
 	
 	private Map<String, Set<String>> index;
 	private Set<String> termSet;
@@ -21,24 +24,24 @@ public class KGramIndex extends Index<Set<String>> {
 
 	// ------------------------------------------------------------------------------------------------------
 
-	public void add(String term) {
-		if (!termSet.contains(term)) {
-			String specialTerm = encapsulate(term);
+	public void add(String type) {
+		if (!termSet.contains(type)) {
+			String specialType = encapsulate(type);
 			for (int k = 1; k <= 3; k++) {
-				List<String> grams = generateGrams(k, specialTerm);
-				addPosting(grams, term);
+				List<String> grams = generateGrams(k, specialType);
+				addPosting(grams, type);
 			}
-			this.termSet.add(term);
+			this.termSet.add(type);
 		}
 		this.index.remove("$");
 	}
 
 	// ------------------------------------------------------------------------------------------------------
 
-	public List<String> generateGrams(int k, String term) {
+	public List<String> generateGrams(int k, String type) {
 		List<String> grams = new ArrayList<String>();
-		for (int i = 0; i <= term.length() - k; i++) {
-			String gram = term.substring(i, i + k);
+		for (int i = 0; i <= type.length() - k; i++) {
+			String gram = type.substring(i, i + k);
 			grams.add(gram);
 		}
 		return grams;
@@ -48,7 +51,7 @@ public class KGramIndex extends Index<Set<String>> {
 
 	@Override
 	public String[] getDictionary() {
-		Set<String> grams = new HashSet<String>(this.index.keySet());
+		SortedSet<String> grams = new TreeSet<String>(this.index.keySet());
 		return grams.toArray(new String[grams.size()]);
 	}
 

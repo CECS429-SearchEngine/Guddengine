@@ -5,13 +5,13 @@ import java.util.Set;
 
 public class Normalizer {
 
-	public String normalize(String token) {
+	public static String normalize(String token) {
 		return token.replaceAll("^[^a-zA-Z0-9]+|[^a-zA-Z0-9]+$|\'", "");
 	}
 
 	// ------------------------------------------------------------------------------------------------------
 
-	public Set<String> splitHypenWords(String token) {
+	public static Set<String> splitHypenWords(String token) {
 		Set<String> tokenSet = new HashSet<String>();
 		StringBuilder sb = new StringBuilder();
 		String[] tokens = token.split("-");
@@ -25,7 +25,7 @@ public class Normalizer {
 
 	// ------------------------------------------------------------------------------------------------------
 
-	public String stem(String token) {
+	public static String stem(String token) {
 		Stemmer stemmer = new Stemmer();
 		stemmer.add(token.toCharArray(), token.length());
 		stemmer.stem();

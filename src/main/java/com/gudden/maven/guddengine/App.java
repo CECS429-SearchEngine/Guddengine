@@ -1,12 +1,12 @@
 package com.gudden.maven.guddengine;
 
-import java.io.IOException;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Scanner;
 import java.util.Set;
 
 import com.gudden.maven.model.Guddengine;
+import com.gudden.maven.model.Normalizer;
 import com.gudden.maven.model.PositionalPosting;
 import com.gudden.maven.model.Query;
 
@@ -24,7 +24,7 @@ public class App {
 
 		Scanner sc = new Scanner(System.in);
 		System.out.print("Please enter the directory path you wish to index: ");
-		FILE_NAMES = indexDirectory(GUDDEN, sc.nextLine());
+		FILE_NAMES = indexDirectory(GUDDEN, "/Users/kuminin/Desktop/GuddenTheEngine/test");
 		
 		while(true) {
 			String queryString = sc.nextLine().trim();
@@ -37,7 +37,7 @@ public class App {
 				break;
 			case ":stem":
 				System.out.print("The stemmed token for \"" + specialQuery[1] + "\" is \"");
-				System.out.println(GUDDEN.stemToken(specialQuery[1]) + "\"");
+				System.out.println(Normalizer.stem(specialQuery[1]) + "\"");
 				break;
 			case ":index":
 				FILE_NAMES = indexDirectory(GUDDEN,specialQuery[1]);
@@ -76,11 +76,7 @@ public class App {
 		System.out.println("Indexing the new path at \"" + path + "\"");
 		List<String> fileNames = null;
 		engine.resetIndex();
-		try {
-			fileNames = engine.indexDirectory(path);
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
+		fileNames = engine.indexDirectory(path);
 		System.out.println("Done Indexing");
 		return fileNames;
 	}

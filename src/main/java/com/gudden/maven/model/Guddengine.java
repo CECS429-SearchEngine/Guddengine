@@ -18,65 +18,36 @@ import java.util.SortedSet;
 
 public class Guddengine {
 	
-	private PositionalInvertedIndex PII;
-	private KGramIndex KGI;
-	private Normalizer NORM;
+	private IndexBank BANK;
 
 	// ------------------------------------------------------------------------------------------------------
 	
 	/** Creates a new instance of Guddengine. */
 	public Guddengine() {
-		this.PII = new PositionalInvertedIndex();
-		this.KGI = new KGramIndex();
-		this.NORM = new Normalizer();
+		this.BANK = new IndexBank();
 	}
-
-	// ------------------------------------------------------------------------------------------------------
 	
-	/** Returns the file names that has been added from indexing the file that were in the given path. */
-	public List<String> indexDirectory(String path) throws IOException {
-		final Path currentWorkingPath = Paths.get(path).toAbsolutePath();
-
-		// the list of file names that were processed.
-		List<String> fileNames = new ArrayList<String>();
-
-		// This is our standard "walk through all .json files" code.
-		Files.walkFileTree(currentWorkingPath, new SimpleFileVisitor<Path>() {
-			int documentID = 0;
-
-			public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs) {
-				// make sure we only process the current working directory.
-				if (currentWorkingPath.equals(dir)) {
-					return FileVisitResult.CONTINUE;
-				}
-				return FileVisitResult.SKIP_SUBTREE;
-			}
-
-			public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) {
-				// only process .json files
-				if (file.toString().endsWith(".json")) {
-					// we have found a .json file; add its name to the fileName list,
-					// then index the file and increase the document ID counter.
-					fileNames.add(file.getFileName().toString());
-					addTokens(file.toFile(), documentID++);
-				}
-				return FileVisitResult.CONTINUE;
-			}
-
-			// don't throw exceptions if files are locked/other errors occur.
-			public FileVisitResult visitFileFailed(Path file, IOException e) {
-				return FileVisitResult.CONTINUE;
-			}
-		});
-		return fileNames;
+	public IndexBank getBank() {
+		return this.BANK;
 	}
 	
 	// ------------------------------------------------------------------------------------------------------
 	
 	/** Remove all the terms and types that have been indexed. */
 	public void resetIndex() {
-		this.PII.resetIndex();
-		this.KGI.resetIndex();
+		this.BANK.reset();
+	}
+	
+	// ------------------------------------------------------------------------------------------------------
+	
+	/** Returns the file names that has been added from indexing the file that were in the given path. */
+	public List<String> indexDirectory(String path) {
+		try {
+			return this.BANK.indexDirectory(path);
+		} catch (IOException e) {
+			System.out.println(e.toString());
+		}
+		return null;
 	}
 	
 	// ------------------------------------------------------------------------------------------------------
@@ -95,16 +66,9 @@ public class Guddengine {
 	
 	// ------------------------------------------------------------------------------------------------------
 	
-	/** Returns the String that has been stemmed. */
-	public String stemToken(String token) {
-		return this.NORM.stem(token);
-	}
-
-	// ------------------------------------------------------------------------------------------------------
-	
 	/** Returns an array of String containing terms that have been added into the positional inverted index */
 	public String[] vocabulary() {
-		return PII.getDictionary();
+		return this.BANK.getPositionalInvertedIndex().getDictionary();
 	}
 	
 	// ------------------------------------------------------------------------------------------------------
@@ -122,13 +86,14 @@ public class Guddengine {
 	
 	private Set<String> getTypes(String[] grams) {
 		Set<String> result = new HashSet<String>();
+		KGramIndex kgi = this.BANK.getKGramIndex();
 		for (String each : grams) {
 			if (each.equals("$")) {
 				continue;
 			} else if (each.length() > 3) {
 				// generate the KGrams from if the length of the gram is greater than 4 since we have a
 				// maximum of 3 grams in the KGramIndex.
-				List<String> subGrams = KGI.generateGrams(3,  each);
+				List<String> subGrams = kgi.generateGrams(3,  each);
 				// recursively call processGrams to retrive the types for the subGrams. Union results.
 				Set<String> resultSet = getTypes(subGrams.toArray(new String[subGrams.size()]));
 				if (!result.isEmpty())
@@ -136,38 +101,15 @@ public class Guddengine {
 				else
 					result.addAll(resultSet);
 			} else if (result.isEmpty()) {
-				result.addAll(KGI.getPostings(each));
+				result.addAll(kgi.getPostings(each));
 			} else {
-				result.retainAll(KGI.getPostings(each));
+				result.retainAll(kgi.getPostings(each));
 			}
 		}
 		return result;
 	}
 	
 	// ------------------------------------------------------------------------------------------------------
-	
-	private void addTokens(File file, int docId) {
-		DocumentTokenStream dp = new DocumentTokenStream(file);
-		int position = 0;	// keep track of the positions for each token.
-		while (dp.hasNextToken()) {
-			String type = dp.nextToken();
-			if (type == null) continue;	// skip the proceeding instructions if the term is an empty string.
-			type = this.NORM.normalize(type);
-			if (type.contains("-")) {
-				// We separate the hyphened type to create a set types that will be added into the index.
-				Set<String> types = this.NORM.splitHypenWords(type);
-				for (String each : types) {
-					this.KGI.add(each);
-					this.PII.add(this.NORM.stem(each), docId, position);
-				}
-			} else {
-				// Add the type to the KGramIndex and the term (stemmed type) into the PositionalInvertedIndex
-				this.KGI.add(type);
-				this.PII.add(this.NORM.stem(type), docId, position);
-			}
-			position++;	// Increment for each token.
-		}
-	}
 	
 	// ------------------------------------------------------------------------------------------------------
 	
@@ -304,8 +246,8 @@ public class Guddengine {
 			// of the processed phrase query.
 			return processPhraseQuery(literal.split("\\s+"));
 		}
-		String token = NORM.stem(NORM.normalize(literal));
-		return PII.getPostings(token);
+		String token = Normalizer.stem(Normalizer.normalize(literal));
+		return this.BANK.getPositionalInvertedIndex().getPostings(token);
 	}
 	
 	// ------------------------------------------------------------------------------------------------------
