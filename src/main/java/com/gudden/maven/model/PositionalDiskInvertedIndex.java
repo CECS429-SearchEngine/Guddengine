@@ -171,4 +171,22 @@ public class PositionalDiskInvertedIndex {
 		}
 		return positions;
 	}
+	
+	public String[] getDictionary() {
+		String [] vocabularies = new String [this.vocabTable.length];
+		try {
+			for(int i = 0; i < this.vocabTable.length - 1; i++) {
+				int length = (int) (vocabTable[i + 1] - vocabTable[i]);
+				this.vocabList.seek(vocabTable[i]);
+				
+				// Read vocabList into buffer and create the string from gap (termLength)
+				byte[] buffer = new byte[length];
+				vocabList.read(buffer, 0, length);
+				vocabularies[i] = new String(buffer, "ASCII");
+			}
+		} catch(IOException e) {
+			System.out.println(e.toString());
+		}
+		return vocabularies;
+	}
 }

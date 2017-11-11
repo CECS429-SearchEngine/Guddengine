@@ -23,32 +23,48 @@ public class App {
 	public static void main(String[] args) {
 
 		Scanner sc = new Scanner(System.in);
-		System.out.print("Please enter the directory path you wish to index: ");
-		FILE_NAMES = indexDirectory(GUDDEN, "/Users/kuminin/Desktop/GuddenTheEngine/test");
-		
 		while(true) {
-			String queryString = sc.nextLine().trim();
-			String[] specialQuery = queryString.split("\\s+");
-			switch(specialQuery[0]) {
-			case ":q":
-				System.out.println("Have a good day. Thank you for using guddengine.");
-				sc.close();
-				System.exit(0);
-				break;
-			case ":stem":
-				System.out.print("The stemmed token for \"" + specialQuery[1] + "\" is \"");
-				System.out.println(Normalizer.stem(specialQuery[1]) + "\"");
-				break;
-			case ":index":
-				FILE_NAMES = indexDirectory(GUDDEN,specialQuery[1]);
-				break;
-			case ":vocab":
-				for (String each : GUDDEN.vocabulary()) System.out.println(each);
-				System.out.println("There are total of " + GUDDEN.vocabulary().length + " vocabularies.");
-				break;
-			default:
-				search(queryString);
-				break;
+			System.out.println("Menu:\n1. Build index \n2. Read and query index\n3. exit\nChoose a selection:");
+			int menuChoice = Integer.parseInt(sc.nextLine().trim());
+			System.out.print("Please enter the directory path you wish to index: ");
+			String path = sc.nextLine();
+			switch(menuChoice) {
+				case 1:
+					FILE_NAMES = indexDirectory(GUDDEN, path);
+					break;
+				case 2:
+					GUDDEN.setDiskIndexes(path);
+					FILE_NAMES = GUDDEN.getFileNames(path);
+					while(sc.hasNext()) {
+						String queryString = sc.nextLine().trim();
+						String[] specialQuery = queryString.split("\\s+");
+						switch(specialQuery[0]) {
+						case ":q":
+							System.out.println("Have a good day. Thank you for using guddengine.");
+							sc.close();
+							System.exit(0);
+							break;
+						case ":stem":
+							System.out.print("The stemmed token for \"" + specialQuery[1] + "\" is \"");
+							System.out.println(Normalizer.stem(specialQuery[1]) + "\"");
+							break;
+						case ":index":
+							FILE_NAMES = indexDirectory(GUDDEN,specialQuery[1]);
+							break;
+						case ":vocab":
+							for (String each : GUDDEN.vocabulary()) System.out.println(each);
+							System.out.println("There are total of " + GUDDEN.vocabulary().length + " vocabularies.");
+							break;
+						default:
+							search(queryString);
+							break;
+						}
+					}
+					break;
+				case 3:
+					System.exit(0);
+				default:
+					System.out.println("Wrong choice");
 			}
 		}
 	}

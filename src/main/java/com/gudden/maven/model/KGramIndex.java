@@ -38,7 +38,7 @@ public class KGramIndex extends Index<Set<String>> implements Serializable {
 
 	// ------------------------------------------------------------------------------------------------------
 
-	public List<String> generateGrams(int k, String type) {
+	public static List<String> generateGrams(int k, String type) {
 		List<String> grams = new ArrayList<String>();
 		for (int i = 0; i <= type.length() - k; i++) {
 			String gram = type.substring(i, i + k);

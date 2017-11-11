@@ -19,7 +19,7 @@ import java.util.SortedSet;
 public class Guddengine {
 	
 	private IndexBank BANK;
-
+	
 	// ------------------------------------------------------------------------------------------------------
 	
 	/** Creates a new instance of Guddengine. */
@@ -29,6 +29,48 @@ public class Guddengine {
 	
 	public IndexBank getBank() {
 		return this.BANK;
+	}
+	
+	public void setDiskIndexes(String path) {
+		this.BANK.setDiskIndexes(path);
+	}
+	
+	public List<String> getFileNames(String path) {
+		List<String> fileNames = new ArrayList<String>();
+		final Path currentWorkingPath = Paths.get(path).toAbsolutePath();
+		// This is our standard "walk through all .json files" code.
+		try {
+			Files.walkFileTree(currentWorkingPath, new SimpleFileVisitor<Path>() {
+				int documentID = 0;
+
+				public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs) {
+					// make sure we only process the current working directory.
+					if (currentWorkingPath.equals(dir)) {
+						return FileVisitResult.CONTINUE;
+					}
+					return FileVisitResult.SKIP_SUBTREE;
+				}
+
+				public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) {
+					// only process .json files
+					if (file.toString().endsWith(".json")) {
+						// we have found a .json file; add its name to the fileName list,
+						// then index the file and increase the document ID counter.
+						fileNames.add(file.getFileName().toString());
+					}
+					return FileVisitResult.CONTINUE;
+				}
+
+				// don't throw exceptions if files are locked/other errors occur.
+				public FileVisitResult visitFileFailed(Path file, IOException e) {
+					return FileVisitResult.CONTINUE;
+				}
+			});
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		return fileNames;
 	}
 	
 	// ------------------------------------------------------------------------------------------------------
@@ -68,7 +110,7 @@ public class Guddengine {
 	
 	/** Returns an array of String containing terms that have been added into the positional inverted index */
 	public String[] vocabulary() {
-		return this.BANK.getPositionalInvertedIndex().getDictionary();
+		return this.BANK.getPositionalDiskInvertedIndex().getDictionary();
 	}
 	
 	// ------------------------------------------------------------------------------------------------------
@@ -86,14 +128,14 @@ public class Guddengine {
 	
 	private Set<String> getTypes(String[] grams) {
 		Set<String> result = new HashSet<String>();
-		KGramIndex kgi = this.BANK.getKGramIndex();
+		KGramDiskIndex kgi = this.BANK.getKGramDiskIndex();
 		for (String each : grams) {
 			if (each.equals("$")) {
 				continue;
 			} else if (each.length() > 3) {
 				// generate the KGrams from if the length of the gram is greater than 4 since we have a
 				// maximum of 3 grams in the KGramIndex.
-				List<String> subGrams = kgi.generateGrams(3,  each);
+				List<String> subGrams = KGramIndex.generateGrams(3,  each);
 				// recursively call processGrams to retrive the types for the subGrams. Union results.
 				Set<String> resultSet = getTypes(subGrams.toArray(new String[subGrams.size()]));
 				if (!result.isEmpty())
@@ -101,9 +143,9 @@ public class Guddengine {
 				else
 					result.addAll(resultSet);
 			} else if (result.isEmpty()) {
-				result.addAll(kgi.getPostings(each));
+				result.addAll(kgi.getTypes(each));
 			} else {
-				result.retainAll(kgi.getPostings(each));
+				result.retainAll(kgi.getTypes(each));
 			}
 		}
 		return result;
@@ -247,7 +289,7 @@ public class Guddengine {
 			return processPhraseQuery(literal.split("\\s+"));
 		}
 		String token = Normalizer.stem(Normalizer.normalize(literal));
-		return this.BANK.getPositionalInvertedIndex().getPostings(token);
+		return this.BANK.getPositionalDiskInvertedIndex().getPostings(token);
 	}
 	
 	// ------------------------------------------------------------------------------------------------------

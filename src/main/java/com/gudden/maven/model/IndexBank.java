@@ -17,6 +17,8 @@ import java.util.Set;
 public class IndexBank {
 	private PositionalInvertedIndex PII;
 	private KGramIndex KGI;
+	private KGramDiskIndex KGDI;
+	private PositionalDiskInvertedIndex PDII;
 	private List<Double> docLengths;
 	
 	// ------------------------------------------------------------------------------------------------------
@@ -39,15 +41,32 @@ public class IndexBank {
 		return this.KGI;
 	}
 	
+	public KGramDiskIndex getKGramDiskIndex() {
+		return this.KGDI;
+	}
+	
+	public PositionalDiskInvertedIndex getPositionalDiskInvertedIndex() {
+		return this.PDII;
+	}
+	
 	public List<Double> getDocLengths() {
 		return this.docLengths;
 	}
 
+	// ------------------------------------------------------------------------------------------------------
+	
+	public void setDiskIndexes(String path) {
+		KGDI = new KGramDiskIndex(path);
+		PDII = new PositionalDiskInvertedIndex(path);
+	}
+	
 	// ------------------------------------------------------------------------------------------------------	
 	
 	public void reset() {
 		this.PII.resetIndex();
 		this.KGI.resetIndex();
+		this.KGDI = null;
+		this.PDII = null;
 		this.docLengths = new ArrayList<Double>();
 	}
 
@@ -55,6 +74,9 @@ public class IndexBank {
 	
 	public List<String> indexDirectory(String path) throws IOException {
 		final Path currentWorkingPath = Paths.get(path).toAbsolutePath();
+		
+		PositionalInvertedIndexWriter piiw = new PositionalInvertedIndexWriter(path);
+		KGramIndexWriter kgiw = new KGramIndexWriter(path);
 		
 		// the list of file names that were processed.
 		List<String> fileNames = new ArrayList<String>();
@@ -87,6 +109,8 @@ public class IndexBank {
 				return FileVisitResult.CONTINUE;
 			}
 		});
+		piiw.buildIndex(this.PII);
+		kgiw.buildIndex(this.KGI);
 		return fileNames;
 	}
 	
@@ -157,4 +181,6 @@ public class IndexBank {
 		List<PositionalPosting> postings = this.PII.getPostings(term);
 		postings.get(postings.size() - 1).setScore(score);
 	}
+	
+	
 }
