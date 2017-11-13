@@ -110,6 +110,7 @@ public class IndexBank {
 			}
 		});
 		piiw.buildIndex(this.PII);
+		piiw.buildWeights(this.docLengths);
 		kgiw.buildIndex(this.KGI);
 		return fileNames;
 	}

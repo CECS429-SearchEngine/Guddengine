@@ -33,8 +33,8 @@ public class KGramIndexWriter extends IndexWriter<KGramIndex> {
 		long[] gramPositions = new long[dictionary.length];
 		
 		try {
-			buildVocabFile(folder, dictionary, gramPositions, "gramVocab.bin");
-			buildGramPostingsFile(folder, index, dictionary, gramPositions);
+			buildVocabFile(folder + "/bin", dictionary, gramPositions, "gramVocab.bin");
+			buildGramPostingsFile(folder + "/bin", index, dictionary, gramPositions);
 		} catch (IOException e) {
 			System.out.println(e.toString());
 		}
