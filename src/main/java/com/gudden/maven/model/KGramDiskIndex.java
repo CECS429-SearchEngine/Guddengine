@@ -44,11 +44,13 @@ public class KGramDiskIndex extends DiskInvertedIndex {
 	private long[] readVocabTable(String indexName, String fileName) throws IOException {
 		long[] gramTable = null;
 		RandomAccessFile tableFile = new RandomAccessFile(new File(indexName, fileName), "r");
+		// The total number of grams created
 		long tableSize = decodeFile(tableFile);
 		gramTable = new long[(int) tableSize * 2];
 		for (int i = 0; i < gramTable.length; i += 2) {
-			gramTable[i] = decodeFile(tableFile);
-			gramTable[i + 1] = decodeFile(tableFile);
+			// Decodes position of gram in gramVocab.bin and position of gram's posting in gramPostings.bin
+			gramTable[i] = decodeFile(tableFile); 
+			gramTable[i + 1] = decodeFile(tableFile); 
 		}
 		tableFile.close();
 		return gramTable;
@@ -70,5 +72,4 @@ public class KGramDiskIndex extends DiskInvertedIndex {
 		}
 		return null;
 	}
-
 }

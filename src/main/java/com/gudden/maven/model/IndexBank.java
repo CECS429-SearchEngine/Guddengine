@@ -31,6 +31,7 @@ public class IndexBank {
 
 	// ------------------------------------------------------------------------------------------------------
 	
+	/** Gets the length of each document (Ld value). */
 	public List<Double> getDocLengths() {
 		return this.docLengths;
 	}
