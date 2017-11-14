@@ -9,19 +9,7 @@ import java.util.List;
 
 public abstract class IndexWriter<T> {
 	
-	private String folderPath;
-
-	// ------------------------------------------------------------------------------------------------------
-	
-	protected IndexWriter(String folderPath) {
-		this.folderPath = folderPath;
-	}
-	
-	// ------------------------------------------------------------------------------------------------------
-	
-	public String getFolderPath() {
-		return this.folderPath;
-	}
+	protected String folderPath;
 
 	// ------------------------------------------------------------------------------------------------------
 	

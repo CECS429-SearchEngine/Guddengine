@@ -6,39 +6,19 @@ import java.io.IOException;
 import java.util.Set;
 
 public class KGramIndexWriter extends IndexWriter<KGramIndex> {
-	public static void main(String[] args) {
-		Guddengine engine = new Guddengine();
-		KGramIndexWriter kgiw = new KGramIndexWriter("/Users/kuminin/Desktop/GuddenTheEngine/test/bin");
-		IndexBank bank = engine.getBank();
-		engine.indexDirectory("/Users/kuminin/Desktop/GuddenTheEngine/test");
-		kgiw.buildIndex(bank.getKGramIndex());
-	}
 	
 	public KGramIndexWriter(String folderPath) {
-		super(folderPath);
+		this.folderPath = folderPath;
 	}
+
+	// ------------------------------------------------------------------------------------------------------
 	
 	@Override
 	public void buildIndex(KGramIndex index) {
-		buildIndexForDirectory(index, super.getFolderPath());
+		buildIndexForDirectory(index, this.folderPath);
 	}
-
-	@Override
-	protected void buildIndexForDirectory(KGramIndex index, String folder) {
-		// TODO Auto-generated method stub
-		
-		// An array of types
-		String[] dictionary = index.getDictionary();
-		
-		long[] gramPositions = new long[dictionary.length];
-		
-		try {
-			buildVocabFile(folder + "/bin", dictionary, gramPositions, "gramVocab.bin");
-			buildGramPostingsFile(folder + "/bin", index, dictionary, gramPositions);
-		} catch (IOException e) {
-			System.out.println(e.toString());
-		}
-	}
+	
+	// ------------------------------------------------------------------------------------------------------
 	
 	private void buildGramPostingsFile(String folder, KGramIndex index, String[] dict, long[] positions) throws IOException {
 		int idx = 0;
@@ -70,4 +50,22 @@ public class KGramIndexWriter extends IndexWriter<KGramIndex> {
 		gramsFile.close();
 	}
 
+	// ------------------------------------------------------------------------------------------------------
+	
+	@Override
+	protected void buildIndexForDirectory(KGramIndex index, String folder) {
+		// TODO Auto-generated method stub
+		
+		// An array of types
+		String[] dictionary = index.getDictionary();
+		
+		long[] gramPositions = new long[dictionary.length];
+		
+		try {
+			buildVocabFile(folder + "/bin", dictionary, gramPositions, "gramVocab.bin");
+			buildGramPostingsFile(folder + "/bin", index, dictionary, gramPositions);
+		} catch (IOException e) {
+			System.out.println(e.toString());
+		}
+	}
 }

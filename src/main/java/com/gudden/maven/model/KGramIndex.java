@@ -1,6 +1,5 @@
 package com.gudden.maven.model;
 
-import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -10,7 +9,7 @@ import java.util.Set;
 import java.util.SortedSet;
 import java.util.TreeSet;
 
-public class KGramIndex extends Index<Set<String>> implements Serializable {
+public class KGramIndex extends Index<Set<String>> {
 	
 	private Map<String, Set<String>> index;
 	private Set<String> termSet;
