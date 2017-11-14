@@ -32,7 +32,7 @@ public class PositionalInvertedIndexWriter extends IndexWriter<PositionalInverte
 	public void buildWeights(List<Double> docLengths) {
 		try {
 			String folder = super.getFolderPath();
-			FileOutputStream postingsFile = new FileOutputStream(new File (folder, "docWeights.bin"));
+			FileOutputStream postingsFile = new FileOutputStream(new File (folder + "/bin", "docWeights.bin"));
 			for (double each : docLengths) {
 				postingsFile.write(convertToByte(each), 0, 8);
 			}
@@ -52,8 +52,8 @@ public class PositionalInvertedIndexWriter extends IndexWriter<PositionalInverte
 		// The positions in the vocabulary file 
 		long[] vocabPositions = new long[dictionary.length];
 		try {
-			buildVocabFile(folder, dictionary, vocabPositions, "vocab.bin");
-			buildPostingsFile(folder, index, dictionary, vocabPositions);
+			buildVocabFile(folder + "/bin", dictionary, vocabPositions, "vocab.bin");
+			buildPostingsFile(folder + "/bin", index, dictionary, vocabPositions);
 		} catch (IOException e) {
 			System.out.println(e.toString());
 		}
