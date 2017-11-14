@@ -5,6 +5,7 @@ import java.util.List;
 
 public class VariableByteEncoding {
 
+	/** VBE Encoding Gaps */
 	public static List<Long> VBEncode(List<Integer> numbers) {
 		List<Long> bytestream = new ArrayList<Long>();
 		long previousNumber = 0;
@@ -17,6 +18,7 @@ public class VariableByteEncoding {
 	
 	// ------------------------------------------------------------------------------------------------------
 	
+	/** Changing long values to Variable Byte Encoded values */
 	public static List<Long> VBEncodenumber(long n) {
 		List<Long> bytes = new ArrayList<Long>(5);
 		while (true) {
