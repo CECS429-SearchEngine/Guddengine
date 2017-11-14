@@ -36,7 +36,7 @@ public class App {
 					GUDDEN.setDiskIndexes(path);
 					FILE_NAMES = GUDDEN.getFileNames(path);
 					
-					while(sc.hasNextLine()) {
+					while(true) {
 						System.out.println("Which mode do you want? \n1. Ranked Query\n2. Boolean Query");
 						boolean ranked = sc.nextLine().trim().equals("1");
 						String queryString = sc.nextLine().trim();
@@ -59,11 +59,11 @@ public class App {
 							System.out.println("There are total of " + GUDDEN.vocabulary().length + " vocabularies.");
 							break;
 						default:
-							search(queryString, ranked);
+							if (ranked) rankedSearch(queryString);
+							else search(queryString);
 							break;
 						}
 					}
-					break;
 				case 3:
 					System.exit(0);
 				default:
@@ -74,19 +74,23 @@ public class App {
 
 	// ------------------------------------------------------------------------------------------------------
 	
-	private static void search(String queryString, boolean ranked) {
+	private static void search(String queryString) {
 		Query query = new Query(queryString);
-		List<PositionalPosting> results = GUDDEN.search(query, ranked);
-		Set<Integer> resultId = new HashSet<Integer>();
-		if (results != null) {
-			for (PositionalPosting result : results) {
-				if (!resultId.contains(result.getId())) {
-					resultId.add(result.getId());
-					System.out.println(FILE_NAMES.get(result.getId()));
-				}
-			}
-			System.out.println("Size: " + resultId.size());
-		}
+		List<PositionalPosting> results = GUDDEN.search(query);
+		if (!results.isEmpty())
+			for (PositionalPosting result : results)
+				System.out.printf("Filename: %s\n\n", FILE_NAMES.get(result.getId()));
+		System.out.println("Size: " + results.size());
+	}
+	
+	// ------------------------------------------------------------------------------------------------------
+	
+	private static void rankedSearch(String queryString) {
+		Query query = new Query(queryString);
+		List<PositionalPosting> results = GUDDEN.rankedSearch(query);
+		if (!results.isEmpty())
+			for (PositionalPosting result : results)
+				System.out.printf("Filename: %s\tScore: %.2f\n\n", FILE_NAMES.get(result.getId()), result.getScore());
 	}
 	
 	// ------------------------------------------------------------------------------------------------------

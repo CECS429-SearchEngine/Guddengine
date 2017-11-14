@@ -40,8 +40,6 @@ public class Guddengine {
 		// This is our standard "walk through all .json files" code.
 		try {
 			Files.walkFileTree(currentWorkingPath, new SimpleFileVisitor<Path>() {
-				int documentID = 0;
-
 				public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs) {
 					// make sure we only process the current working directory.
 					if (currentWorkingPath.equals(dir)) {
@@ -95,31 +93,37 @@ public class Guddengine {
 	// ------------------------------------------------------------------------------------------------------
 	
 	/** Returns the merged result of the query that has been provided.. */
-	public List<PositionalPosting> search(Query query, boolean ranked) {
+	public List<PositionalPosting> search(Query query) {
 		List<SubQuery> subQueries = query.getSubQueries();
-		if (ranked) {
-			double[] scores = new double[this.docCount];
-			for (SubQuery each : query.getSubQueries()) {
-				processRankedLiteral(each.getLiterals().get(0), scores);
-			}
-			PriorityQueue<PositionalPosting> pq = new PriorityQueue<PositionalPosting>();
-			for(int i = 0; i < scores.length; i++) {
-				if(scores[i] > 0) {
-					double score = scores[i] / this.BANK.getPositionalDiskInvertedIndex().getDocumentWeights(i);
-					pq.add(new PositionalPosting(i, null, score));
-				}
-			}
-			List<PositionalPosting> result = new ArrayList<PositionalPosting>(10);
-			for (int i = 0; i < 10; i++) {
-				result.add(pq.poll());
-				System.out.println(result.get(i));
-			}
-			return result;
-		}
+		
 		// process each sub-query and union their results.
 		List<PositionalPosting> result = processSubQuery(subQueries.get(0));
 		for (int i = 1; i < subQueries.size(); i++) {
 			result = union(result, processSubQuery(subQueries.get(i)));
+		}
+		return result;
+	}
+	
+	public List<PositionalPosting> rankedSearch(Query query) {
+		double[] scores = new double[this.docCount];
+		
+		SubQuery sq = query.getSubQueries().get(0);
+		List<PositionalPosting> result = new ArrayList<PositionalPosting>(10);
+		PriorityQueue<PositionalPosting> pq = new PriorityQueue<PositionalPosting>();
+		
+		for (String literal : sq.getLiterals())
+			processRankedLiteral(literal, scores);
+		
+		for(int i = 0; i < scores.length; i++) {
+			if(scores[i] > 0) {
+				double score = scores[i] / this.BANK.getPositionalDiskInvertedIndex().getDocumentWeights(i);
+				pq.add(new PositionalPosting(i, null, score));
+			}
+		}
+		
+		int priorityQueueSize = pq.size();
+		for (int i = 0; i < 10 && i < priorityQueueSize; i++) {
+			result.add(pq.poll());
 		}
 		return result;
 	}

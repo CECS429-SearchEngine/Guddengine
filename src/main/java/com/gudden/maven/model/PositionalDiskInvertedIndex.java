@@ -9,7 +9,6 @@ import java.util.List;
 
 public class PositionalDiskInvertedIndex {
 	
-	
 	private long[] vocabTable;
 	private String path;
 	private RandomAccessFile vocabList;
@@ -31,26 +30,51 @@ public class PositionalDiskInvertedIndex {
 		this.vocabTable = readVocabTable(path);
 	}
 	
+	// ------------------------------------------------------------------------------------------------------
+	
+	/** Returns the vocabularies that are in the corpus. */
+	public String[] getDictionary() {
+		String [] vocabularies = new String [this.vocabTable.length];
+		try {
+			for (int i = 0; i < this.vocabTable.length - 1; i++) {
+				int length = (int) (this.vocabTable[i + 1] - this.vocabTable[i]);
+				this.vocabList.seek(this.vocabTable[i]);
+				
+				// Read vocabList into buffer and create the string from gap (termLength)
+				byte[] buffer = new byte[length];
+				this.vocabList.read(buffer, 0, length);
+				vocabularies[i] = new String(buffer, "ASCII");
+			}
+		} catch (IOException e) {
+			System.out.println(e.toString());
+		}
+		return vocabularies;
+	}
+	
+	// ------------------------------------------------------------------------------------------------------
+	
+	/** Read the Ld weight for a given document id*/
+	public double getDocumentWeights(int docID) {
+		try {
+			// skips to the appropriate location to read 8-byte double
+			this.weights.seek(docID*8);
+			return this.weights.readDouble();
+		} catch (IOException e) {
+			System.out.println(e.toString());
+		}
+		return -1;
+		
+	}
+	
+	// ------------------------------------------------------------------------------------------------------
+	
+	/** Returns the list of PositionalPosting with/without position for a given term. */
 	public List<PositionalPosting> getPostings(String term, boolean position) {
 		long postingsPosition = binarySearchVocabulary(term);
 		if (postingsPosition >= 0) {
 			return readPostingsFromFile(postingsPosition, position);
 		}
 		return null;
-	}
-	
-	// ------------------------------------------------------------------------------------------------------
-	
-	public double getWeights(int id) {
-		try {
-			
-			// skips to the appropriate location to read 8-byte double
-			this.weights.seek(id * 8);
-			return this.weights.readDouble();
-		} catch (IOException e) {
-			System.out.println(e.toString());
-		}
-		return -1;
 	}
 	
 	// ------------------------------------------------------------------------------------------------------
@@ -67,16 +91,18 @@ public class PositionalDiskInvertedIndex {
 			long vListPosition = this.vocabTable[mid * 2];
 			try {
 				// middle is the term that we searched for.
-				if(mid == this.vocabTable.length / 2 - 1) 
-					termLength = (int) (this.vocabList.length() - this.vocabTable[mid * 2]);
-				else termLength = (int) (this.vocabTable[(mid + 1) * 2] - vListPosition);
+				if (mid == this.vocabTable.length / 2 - 1) {
+					termLength = (int)(this.vocabList.length() - this.vocabTable[mid * 2]);
+				} else {
+					termLength = (int)(this.vocabTable[(mid + 1) * 2] - vListPosition);
+				}
 				
 				// Moves pointer to offset position in vocabList
 				this.vocabList.seek(vListPosition);
 				
 				// Read vocabList into buffer and create the string from gap (termLength)
 				byte[] buffer = new byte[termLength];
-				vocabList.read(buffer, 0, termLength);
+				this.vocabList.read(buffer, 0, termLength);
 				fileTerm = new String(buffer, "ASCII");
 			} catch (IOException e) {
 				e.printStackTrace();
@@ -127,16 +153,6 @@ public class PositionalDiskInvertedIndex {
 		return VariableByteEncoding.VBDecode(encoded).get(0);
 	}
 	
-	public double getDocumentWeights(int docID) {
-		try {
-			this.weights.seek(docID*8);
-			return this.weights.readDouble();
-		} catch (IOException e) {
-			System.out.println(e.toString());
-		}
-		return -1;
-		
-	}
 	// ------------------------------------------------------------------------------------------------------	
 	
 	private List<PositionalPosting> readPostingsFromFile(long postingsPosition, boolean position) {
@@ -146,14 +162,18 @@ public class PositionalDiskInvertedIndex {
 			int documentFrequency = (int)decodeFile(this.vocabPostings);	
 			
 			List<PositionalPosting> postings = new ArrayList<PositionalPosting>(documentFrequency);
-			System.out.println(documentFrequency);
 			for (int i = 0; i < documentFrequency; i++) {
 				documentId += decodeFile(this.vocabPostings);
 				double score = this.vocabPostings.readDouble();
-				if(position) {
+				if (position) {
 					List<Integer> positions = readTermPositions(decodeFile(this.vocabPostings));
 					postings.add(new PositionalPosting(documentId, positions, score));
-					System.out.println(postings.get(postings.size() - 1));
+				} else {
+					long termFrequency = decodeFile(this.vocabPostings);
+					for (int counter = 0; counter < termFrequency;) {
+						if (this.vocabPostings.read() > 127) counter++;
+					}
+					postings.add(new PositionalPosting(documentId, null, score));
 				}
 			}
 			return postings;
@@ -173,21 +193,4 @@ public class PositionalDiskInvertedIndex {
 		return positions;
 	}
 	
-	public String[] getDictionary() {
-		String [] vocabularies = new String [this.vocabTable.length];
-		try {
-			for(int i = 0; i < this.vocabTable.length - 1; i++) {
-				int length = (int) (vocabTable[i + 1] - vocabTable[i]);
-				this.vocabList.seek(vocabTable[i]);
-				
-				// Read vocabList into buffer and create the string from gap (termLength)
-				byte[] buffer = new byte[length];
-				vocabList.read(buffer, 0, length);
-				vocabularies[i] = new String(buffer, "ASCII");
-			}
-		} catch(IOException e) {
-			System.out.println(e.toString());
-		}
-		return vocabularies;
-	}
 }

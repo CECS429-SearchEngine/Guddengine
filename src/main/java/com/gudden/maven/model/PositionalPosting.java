@@ -84,7 +84,7 @@ public class PositionalPosting implements Comparable<PositionalPosting> {
 	public int compareTo(PositionalPosting o) {
 		
 		// TODO Auto-generated method stub
-		return Double.valueOf(this.score).compareTo(o.score);
+		return Double.valueOf(o.score).compareTo(this.score);
 	}
 	
 }
