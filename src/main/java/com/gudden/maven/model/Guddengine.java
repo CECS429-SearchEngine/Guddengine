@@ -298,11 +298,11 @@ public class Guddengine {
 	private void processRankedLiteral(String literal, double[] scores) {
 		String token = Normalizer.stem(Normalizer.normalize(literal));
 		List <PositionalPosting> postings = this.BANK.getPositionalDiskInvertedIndex().getPostings(token, false);
+		if(postings == null || postings.isEmpty()) return;
 		double queryWeight = Math.log(1 + ((double)this.docCount/postings.size()));
 		
 		for(PositionalPosting each : postings) 
 			scores[each.getId()] += queryWeight * each.getScore();
-		
 		
 	}
 
