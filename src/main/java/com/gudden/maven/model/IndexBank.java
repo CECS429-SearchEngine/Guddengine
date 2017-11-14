@@ -20,6 +20,7 @@ public class IndexBank {
 	private KGramDiskIndex KGDI;
 	private PositionalDiskInvertedIndex PDII;
 	private List<Double> docLengths;
+	
 	// ------------------------------------------------------------------------------------------------------
 	
 	public IndexBank() {
@@ -30,45 +31,34 @@ public class IndexBank {
 
 	// ------------------------------------------------------------------------------------------------------
 	
-	public PositionalInvertedIndex getPositionalInvertedIndex() {
-		return this.PII;
+	public List<Double> getDocLengths() {
+		return this.docLengths;
 	}
 	
+	// ------------------------------------------------------------------------------------------------------
+
+	public KGramDiskIndex getKGramDiskIndex() {
+		return this.KGDI;
+	}
+
 	// ------------------------------------------------------------------------------------------------------
 	
 	public KGramIndex getKGramIndex() {
 		return this.KGI;
 	}
-	
-	public KGramDiskIndex getKGramDiskIndex() {
-		return this.KGDI;
-	}
-	
+
+	// ------------------------------------------------------------------------------------------------------
+
 	public PositionalDiskInvertedIndex getPositionalDiskInvertedIndex() {
 		return this.PDII;
-	}
-	
-	public List<Double> getDocLengths() {
-		return this.docLengths;
 	}
 
 	// ------------------------------------------------------------------------------------------------------
 	
-	public void setDiskIndexes(String path) {
-		KGDI = new KGramDiskIndex(path);
-		PDII = new PositionalDiskInvertedIndex(path);
+	public PositionalInvertedIndex getPositionalInvertedIndex() {
+		return this.PII;
 	}
 	
-	// ------------------------------------------------------------------------------------------------------	
-	
-	public void reset() {
-		this.PII.resetIndex();
-		this.KGI.resetIndex();
-		this.KGDI = null;
-		this.PDII = null;
-		this.docLengths = new ArrayList<Double>();
-	}
-
 	// ------------------------------------------------------------------------------------------------------
 	
 	public List<String> indexDirectory(String path) throws IOException {
@@ -112,6 +102,30 @@ public class IndexBank {
 		piiw.buildWeights(this.docLengths);
 		kgiw.buildIndex(this.KGI);
 		return fileNames;
+	}
+	
+	// ------------------------------------------------------------------------------------------------------
+	
+	public void setDiskIndexes(String path) {
+		KGDI = new KGramDiskIndex(path);
+		PDII = new PositionalDiskInvertedIndex(path);
+	}
+	
+	// ------------------------------------------------------------------------------------------------------	
+	
+	public void reset() {
+		this.PII.resetIndex();
+		this.KGI.resetIndex();
+		this.KGDI = null;
+		this.PDII = null;
+		this.docLengths = new ArrayList<Double>();
+	}
+
+	// ------------------------------------------------------------------------------------------------------
+
+	private void addScore(String term, double score) {
+		List<PositionalPosting> postings = this.PII.getPostings(term);
+		postings.get(postings.size() - 1).setScore(score);
 	}
 	
 	// ------------------------------------------------------------------------------------------------------
@@ -172,15 +186,11 @@ public class IndexBank {
 		}
 		return Math.sqrt(sum);
 	}
+
+	// ------------------------------------------------------------------------------------------------------
 	
 	private double calculateScore(int frequency) {
 		return 1 + Math.log(frequency);
 	}
-	
-	private void addScore(String term, double score) {
-		List<PositionalPosting> postings = this.PII.getPostings(term);
-		postings.get(postings.size() - 1).setScore(score);
-	}
-	
 	
 }

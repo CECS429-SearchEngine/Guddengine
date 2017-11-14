@@ -59,20 +59,6 @@ public class PositionalInvertedIndex extends Index<List<PositionalPosting>> {
 
 	// ------------------------------------------------------------------------------------------------------
 
-	@Override
-	protected boolean contains(String term) {
-		return this.index.containsKey(term);
-	}
-
-	// ------------------------------------------------------------------------------------------------------
-
-	@Override
-	protected void createPosting(String term) {
-		this.index.put(term, new ArrayList<PositionalPosting>());
-	}
-
-	// ------------------------------------------------------------------------------------------------------
-
 	private void addPosting(String term, int id) {
 		getPostings(term).add(new PositionalPosting(id));
 	}
@@ -88,6 +74,20 @@ public class PositionalInvertedIndex extends Index<List<PositionalPosting>> {
 
 	private PositionalPosting getLatestPosting(List<PositionalPosting> postings) {
 		return postings.get(postings.size() - 1);
+	}
+	
+	// ------------------------------------------------------------------------------------------------------
+
+	@Override
+	protected boolean contains(String term) {
+		return this.index.containsKey(term);
+	}
+
+	// ------------------------------------------------------------------------------------------------------
+
+	@Override
+	protected void createPosting(String term) {
+		this.index.put(term, new ArrayList<PositionalPosting>());
 	}
 
 }

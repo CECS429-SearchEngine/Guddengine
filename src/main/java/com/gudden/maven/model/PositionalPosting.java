@@ -17,14 +17,6 @@ public class PositionalPosting implements Comparable<PositionalPosting> {
 		this.positions = new ArrayList<Integer>();
 	}
 	
-	public void setScore(double score) {
-		this.score = score;
-	}
-	
-	public double getScore() {
-		return this.score;
-	}
-	
 	// ------------------------------------------------------------------------------------------------------
 
 	public PositionalPosting(int id, List<Integer> positions, double score) {
@@ -53,6 +45,12 @@ public class PositionalPosting implements Comparable<PositionalPosting> {
 	
 	// ------------------------------------------------------------------------------------------------------
 	
+	public double getScore() {
+		return this.score;
+	}
+	
+	// ------------------------------------------------------------------------------------------------------
+	
 	public PositionalPosting merge(PositionalPosting other) {
 		List<Integer> mergedPositions = new ArrayList<Integer>();
 		mergedPositions.addAll(this.positions);
@@ -68,22 +66,15 @@ public class PositionalPosting implements Comparable<PositionalPosting> {
 	}
 	
 	// ------------------------------------------------------------------------------------------------------
-
-	public String toString() {
-		StringBuilder sb = new StringBuilder();
-		sb.append(this.id);
-		sb.append(":");
-		for (int i = 0; i < this.positions.size(); i++) {
-			sb.append(" ");
-			sb.append(this.positions.get(i));
-		}
-		return sb.toString();
+	
+	public void setScore(double score) {
+		this.score = score;
 	}
-
+	
+	// ------------------------------------------------------------------------------------------------------
+	
 	@Override
 	public int compareTo(PositionalPosting o) {
-		
-		// TODO Auto-generated method stub
 		return Double.valueOf(o.score).compareTo(this.score);
 	}
 	
