@@ -19,6 +19,7 @@ public class Guddengine {
 	
 	private IndexBank BANK;
 	private int docCount = 0;
+
 	// ------------------------------------------------------------------------------------------------------
 	
 	/** Creates a new instance of Guddengine. */

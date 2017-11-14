@@ -46,11 +46,11 @@ public class Document {
 	
 	public String toString() {
 		StringBuilder sb = new StringBuilder();
-		sb.append(url);
-		sb.append(" ");
+//		sb.append(url);
+//		sb.append(" ");
 		sb.append(body);
-		sb.append(" ");
-		sb.append(title);
+//		sb.append(" ");
+//		sb.append(title);
 		return sb.toString();
 	}
 	

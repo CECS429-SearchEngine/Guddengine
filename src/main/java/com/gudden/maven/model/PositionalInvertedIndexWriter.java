@@ -24,7 +24,7 @@ public class PositionalInvertedIndexWriter extends IndexWriter<PositionalInverte
 	public void buildWeights(List<Double> docLengths) {
 		try {
 			String folder = this.folderPath;
-			FileOutputStream postingsFile = new FileOutputStream(new File (folder + "/bin", "bin/docWeights.bin"));
+			FileOutputStream postingsFile = new FileOutputStream(new File (folder, "bin/docWeights.bin"));
 			for (double each : docLengths) {
 				postingsFile.write(convertToByte(each), 0, 8);
 			}

@@ -1,9 +1,7 @@
 package com.gudden.maven.guddengine;
 
-import java.util.HashSet;
 import java.util.List;
 import java.util.Scanner;
-import java.util.Set;
 
 import com.gudden.maven.model.Guddengine;
 import com.gudden.maven.model.Normalizer;
@@ -24,7 +22,7 @@ public class App {
 
 		Scanner sc = new Scanner(System.in);
 		while(true) {
-			System.out.println("Menu:\n1. Build index \n2. Read and query index\n3. exit\nChoose a selection:");
+			System.out.print("Menu:\n1. Build index \n2. Read and query index\n3. exit\nChoose a selection: ");
 			int menuChoice = Integer.parseInt(sc.nextLine().trim());
 			System.out.print("Please enter the directory path you wish to index: ");
 			String path = sc.nextLine();
@@ -39,6 +37,7 @@ public class App {
 					while(true) {
 						System.out.println("Which mode do you want? \n1. Ranked Query\n2. Boolean Query");
 						boolean ranked = sc.nextLine().trim().equals("1");
+						printCommands();
 						String queryString = sc.nextLine().trim();
 						String[] specialQuery = queryString.split("\\s+");
 						switch(specialQuery[0]) {
@@ -71,6 +70,14 @@ public class App {
 			}
 		}
 	}
+	
+	private static void printCommands() {
+		System.out.println(":q to quit");
+		System.out.println(":stem 'word' to stem a given word");
+		System.out.println(":index 'path' to index a new directory path");
+		System.out.println(":vocab to print out the vocabularies in the entire corpus.");
+		System.out.print("Enter a special command or a phrase you want search for: ");
+	}
 
 	// ------------------------------------------------------------------------------------------------------
 	
@@ -78,8 +85,14 @@ public class App {
 		Query query = new Query(queryString);
 		List<PositionalPosting> results = GUDDEN.search(query);
 		if (!results.isEmpty())
-			for (PositionalPosting result : results)
+			for (PositionalPosting result : results) {
 				System.out.printf("Filename: %s\n\n", FILE_NAMES.get(result.getId()));
+				System.out.print("Id: " + result.getId() + "\tPositions:");
+				for (int i : result.getPositions()) {
+					System.out.print(" " + i);
+				}
+				System.out.println();
+			}
 		System.out.println("Size: " + results.size());
 	}
 	
