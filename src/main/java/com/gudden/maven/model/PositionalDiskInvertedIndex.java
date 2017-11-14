@@ -119,25 +119,29 @@ public class PositionalDiskInvertedIndex {
 	
 	/** Reads the file vocabTable.bin into memory. */
 	private long[] readVocabTable(String indexName) {
+		// holds vocabPostion in odd and length of vocabulary in even.
 		long[] vocabTable = null;
+		
 		try {
 			RandomAccessFile tableFile = new RandomAccessFile(new File(indexName, "bin/vocabTable.bin"), "r");
 			long tableSize = decodeFile(tableFile);
 			vocabTable = new long[(int) tableSize * 2];
+			
 			for (int i = 0; i < vocabTable.length; i += 2) {
-				vocabTable[i] = decodeFile(tableFile);
-				vocabTable[i + 1] = decodeFile(tableFile);
+				vocabTable[i] = decodeFile(tableFile);	// decodes the position located in postings.bin
+				vocabTable[i + 1] = decodeFile(tableFile);	// decodes the the length of the vocabulary.
 			}
 			tableFile.close();
 		} catch (IOException e) {
 			System.out.println(e.toString());
 		}
+		
 		return vocabTable;
 	}
 	
 	// ------------------------------------------------------------------------------------------------------	
 	
-	/** This is genius */
+	/** This is genius. Decodes the first instance of the encoded variable byte.*/
 	private long decodeFile(RandomAccessFile file) throws IOException {
 		long encode = 0;
 		List<Long> encoded = new ArrayList<Long>();
@@ -153,28 +157,33 @@ public class PositionalDiskInvertedIndex {
 		return VariableByteEncoding.VBDecode(encoded).get(0);
 	}
 	
-	// ------------------------------------------------------------------------------------------------------	
+	// ------------------------------------------------------------------------------------------------------
 	
+	/** Returns the list of positional posting created from reading the postings file. */
 	private List<PositionalPosting> readPostingsFromFile(long postingsPosition, boolean position) {
 		try {
-			this.vocabPostings.seek(postingsPosition);
+			this.vocabPostings.seek(postingsPosition);	// move cursor to start where the term starts.
 			int documentId = 0;
-			int documentFrequency = (int)decodeFile(this.vocabPostings);	
+			int documentFrequency = (int)decodeFile(this.vocabPostings);
 			
 			List<PositionalPosting> postings = new ArrayList<PositionalPosting>(documentFrequency);
 			for (int i = 0; i < documentFrequency; i++) {
-				documentId += decodeFile(this.vocabPostings);
-				double score = this.vocabPostings.readDouble();
+				documentId += decodeFile(this.vocabPostings);	// accumulate the document id gaps.
+				double score = this.vocabPostings.readDouble();	// read score for DSP.
+				long termFrequency = decodeFile(this.vocabPostings);
+				
+				// if position is true, then we are doing a boolean query.
 				if (position) {
-					List<Integer> positions = readTermPositions(decodeFile(this.vocabPostings));
+					List<Integer> positions = readTermPositions(termFrequency);
 					postings.add(new PositionalPosting(documentId, positions, score));
 				} else {
-					long termFrequency = decodeFile(this.vocabPostings);
+					// position is false, we are doing ranked query
 					for (int counter = 0; counter < termFrequency;) {
 						if (this.vocabPostings.read() > 127) counter++;
 					}
 					postings.add(new PositionalPosting(documentId, null, score));
 				}
+				
 			}
 			return postings;
 		} catch (IOException e) {
@@ -183,6 +192,9 @@ public class PositionalDiskInvertedIndex {
 		return null;
 	}
 	
+	// ------------------------------------------------------------------------------------------------------
+
+	/** Returns the list of positions that the term occurs in a document. */
 	private List<Integer> readTermPositions(long termFrequency) throws IOException {
 		int termPosition = 0;
 		List<Integer> positions = new ArrayList<Integer>();
