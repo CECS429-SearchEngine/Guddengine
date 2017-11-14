@@ -41,9 +41,8 @@ public class KGramIndexWriter extends IndexWriter<KGramIndex> {
 			
 			for (String each: types) {
 				writeToFile(gramsFile, VariableByteEncoding.VBEncodenumber(each.length()));
-				for (char c : each.toCharArray()) {
-					writeToFile(gramsFile, VariableByteEncoding.VBEncodenumber(c));
-				}
+				for (int i = 0; i < each.length(); i++) 
+					writeToFile(gramsFile, VariableByteEncoding.VBEncodenumber(each.charAt(i)));
 			}
 		}
 		gramTable.close();

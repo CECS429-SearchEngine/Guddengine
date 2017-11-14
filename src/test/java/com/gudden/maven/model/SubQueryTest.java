@@ -11,7 +11,6 @@ public class SubQueryTest {
 	public void testSubQuery() {
 		String queryLiteral = "shakes Jamba Juice";
 		SubQuery dummySubQuery = new SubQuery("shakes            \"Jamba Juice\"       ");
-		System.out.println(dummySubQuery);
 		assertEquals("Excpected 'shakes \"Jamba Juice\"'", dummySubQuery.toString(), queryLiteral);
 		assertTrue(dummySubQuery.getLiterals().size() == 2);
 	}
