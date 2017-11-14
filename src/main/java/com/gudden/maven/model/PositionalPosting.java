@@ -4,7 +4,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-public class PositionalPosting {
+public class PositionalPosting implements Comparable<PositionalPosting> {
 	
 	private int id;
 	private double score;
@@ -78,6 +78,13 @@ public class PositionalPosting {
 			sb.append(this.positions.get(i));
 		}
 		return sb.toString();
+	}
+
+	@Override
+	public int compareTo(PositionalPosting o) {
+		
+		// TODO Auto-generated method stub
+		return Double.valueOf(this.score).compareTo(o.score);
 	}
 	
 }

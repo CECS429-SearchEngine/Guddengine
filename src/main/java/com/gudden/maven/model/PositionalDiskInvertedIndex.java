@@ -9,17 +9,6 @@ import java.util.List;
 
 public class PositionalDiskInvertedIndex {
 	
-	public static void main(String[] args) {
-		List<PositionalPosting> x = new PositionalDiskInvertedIndex("/Users/kuminin/Desktop/GuddenTheEngine/test").getPostings("the");
-		for (PositionalPosting s : x) {
-			System.out.println("Document Id: " + s.getId() + "\nScore: " + s.getScore());
-			System.out.print("Positions:");
-			for (int k : s.getPositions()) {
-				System.out.print(" " + k);
-			}
-			System.out.println("\n");
-		}
-	}
 	
 	private long[] vocabTable;
 	private String path;
@@ -42,10 +31,10 @@ public class PositionalDiskInvertedIndex {
 		this.vocabTable = readVocabTable(path);
 	}
 	
-	public List<PositionalPosting> getPostings(String term) {
+	public List<PositionalPosting> getPostings(String term, boolean position) {
 		long postingsPosition = binarySearchVocabulary(term);
 		if (postingsPosition >= 0) {
-			return readPostingsFromFile(postingsPosition);
+			return readPostingsFromFile(postingsPosition, position);
 		}
 		return null;
 	}
@@ -138,9 +127,19 @@ public class PositionalDiskInvertedIndex {
 		return VariableByteEncoding.VBDecode(encoded).get(0);
 	}
 	
+	public double getDocumentWeights(int docID) {
+		try {
+			this.weights.seek(docID*8);
+			return this.weights.readDouble();
+		} catch (IOException e) {
+			System.out.println(e.toString());
+		}
+		return -1;
+		
+	}
 	// ------------------------------------------------------------------------------------------------------	
 	
-	private List<PositionalPosting> readPostingsFromFile(long postingsPosition) {
+	private List<PositionalPosting> readPostingsFromFile(long postingsPosition, boolean position) {
 		try {
 			this.vocabPostings.seek(postingsPosition);
 			int documentId = 0;
@@ -151,9 +150,11 @@ public class PositionalDiskInvertedIndex {
 			for (int i = 0; i < documentFrequency; i++) {
 				documentId += decodeFile(this.vocabPostings);
 				double score = this.vocabPostings.readDouble();
-				List<Integer> positions = readTermPositions(decodeFile(this.vocabPostings));
-				postings.add(new PositionalPosting(documentId, positions, score));
-				System.out.println(postings.get(postings.size() - 1));
+				if(position) {
+					List<Integer> positions = readTermPositions(decodeFile(this.vocabPostings));
+					postings.add(new PositionalPosting(documentId, positions, score));
+					System.out.println(postings.get(postings.size() - 1));
+				}
 			}
 			return postings;
 		} catch (IOException e) {

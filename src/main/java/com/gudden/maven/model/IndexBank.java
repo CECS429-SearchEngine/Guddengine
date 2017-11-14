@@ -20,7 +20,6 @@ public class IndexBank {
 	private KGramDiskIndex KGDI;
 	private PositionalDiskInvertedIndex PDII;
 	private List<Double> docLengths;
-	
 	// ------------------------------------------------------------------------------------------------------
 	
 	public IndexBank() {

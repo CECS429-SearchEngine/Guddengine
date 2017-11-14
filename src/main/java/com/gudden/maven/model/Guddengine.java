@@ -1,6 +1,5 @@
 package com.gudden.maven.model;
 
-import java.io.File;
 import java.io.IOException;
 import java.nio.file.FileVisitResult;
 import java.nio.file.Files;
@@ -13,13 +12,13 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
+import java.util.PriorityQueue;
 import java.util.Set;
-import java.util.SortedSet;
 
 public class Guddengine {
 	
 	private IndexBank BANK;
-	
+	private int docCount = 0;
 	// ------------------------------------------------------------------------------------------------------
 	
 	/** Creates a new instance of Guddengine. */
@@ -57,6 +56,7 @@ public class Guddengine {
 						// we have found a .json file; add its name to the fileName list,
 						// then index the file and increase the document ID counter.
 						fileNames.add(file.getFileName().toString());
+						docCount ++;
 					}
 					return FileVisitResult.CONTINUE;
 				}
@@ -95,9 +95,27 @@ public class Guddengine {
 	// ------------------------------------------------------------------------------------------------------
 	
 	/** Returns the merged result of the query that has been provided.. */
-	public List<PositionalPosting> search(Query query) {
+	public List<PositionalPosting> search(Query query, boolean ranked) {
 		List<SubQuery> subQueries = query.getSubQueries();
-		
+		if (ranked) {
+			double[] scores = new double[this.docCount];
+			for (SubQuery each : query.getSubQueries()) {
+				processRankedLiteral(each.getLiterals().get(0), scores);
+			}
+			PriorityQueue<PositionalPosting> pq = new PriorityQueue<PositionalPosting>();
+			for(int i = 0; i < scores.length; i++) {
+				if(scores[i] > 0) {
+					double score = scores[i] / this.BANK.getPositionalDiskInvertedIndex().getDocumentWeights(i);
+					pq.add(new PositionalPosting(i, null, score));
+				}
+			}
+			List<PositionalPosting> result = new ArrayList<PositionalPosting>(10);
+			for (int i = 0; i < 10; i++) {
+				result.add(pq.poll());
+				System.out.println(result.get(i));
+			}
+			return result;
+		}
 		// process each sub-query and union their results.
 		List<PositionalPosting> result = processSubQuery(subQueries.get(0));
 		for (int i = 1; i < subQueries.size(); i++) {
@@ -267,10 +285,23 @@ public class Guddengine {
 	private List<PositionalPosting> processSubQuery(SubQuery subQuery) {
 		List<String> literals = subQuery.getLiterals();
 		List<List<PositionalPosting>> result = new ArrayList<List<PositionalPosting>>();
-		for (String each : literals)
+		for (String each : literals) 
 			result.add(processLiteral(each));
+		
 		return intersect(result);
 	}
+	// ------------------------------------------------------------------------------------------------------
+	private void processRankedLiteral(String literal, double[] scores) {
+		String token = Normalizer.stem(Normalizer.normalize(literal));
+		List <PositionalPosting> postings = this.BANK.getPositionalDiskInvertedIndex().getPostings(token, false);
+		double queryWeight = Math.log(1 + ((double)this.docCount/postings.size()));
+		
+		for(PositionalPosting each : postings) 
+			scores[each.getId()] += queryWeight * each.getScore();
+		
+		
+	}
+
 	
 	// ------------------------------------------------------------------------------------------------------
 	
@@ -289,7 +320,7 @@ public class Guddengine {
 			return processPhraseQuery(literal.split("\\s+"));
 		}
 		String token = Normalizer.stem(Normalizer.normalize(literal));
-		return this.BANK.getPositionalDiskInvertedIndex().getPostings(token);
+		return this.BANK.getPositionalDiskInvertedIndex().getPostings(token, true);
 	}
 	
 	// ------------------------------------------------------------------------------------------------------

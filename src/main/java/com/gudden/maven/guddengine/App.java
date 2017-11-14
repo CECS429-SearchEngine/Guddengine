@@ -35,7 +35,10 @@ public class App {
 				case 2:
 					GUDDEN.setDiskIndexes(path);
 					FILE_NAMES = GUDDEN.getFileNames(path);
-					while(sc.hasNext()) {
+					
+					while(sc.hasNextLine()) {
+						System.out.println("Which mode do you want? \n1. Ranked Query\n2. Boolean Query");
+						boolean ranked = sc.nextLine().trim().equals("1");
 						String queryString = sc.nextLine().trim();
 						String[] specialQuery = queryString.split("\\s+");
 						switch(specialQuery[0]) {
@@ -56,7 +59,7 @@ public class App {
 							System.out.println("There are total of " + GUDDEN.vocabulary().length + " vocabularies.");
 							break;
 						default:
-							search(queryString);
+							search(queryString, ranked);
 							break;
 						}
 					}
@@ -71,9 +74,9 @@ public class App {
 
 	// ------------------------------------------------------------------------------------------------------
 	
-	private static void search(String queryString) {
+	private static void search(String queryString, boolean ranked) {
 		Query query = new Query(queryString);
-		List<PositionalPosting> results = GUDDEN.search(query);
+		List<PositionalPosting> results = GUDDEN.search(query, ranked);
 		Set<Integer> resultId = new HashSet<Integer>();
 		if (results != null) {
 			for (PositionalPosting result : results) {
