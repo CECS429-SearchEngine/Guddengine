@@ -26,14 +26,16 @@ public class Guddengine {
 		this.BANK = new IndexBank();
 	}
 	
+	// ------------------------------------------------------------------------------------------------------
+	
+	/** Gets the index bank. */
 	public IndexBank getBank() {
 		return this.BANK;
 	}
 	
-	public void setDiskIndexes(String path) {
-		this.BANK.setDiskIndexes(path);
-	}
+	// ------------------------------------------------------------------------------------------------------
 	
+	/** Walks through all of the files in the directory to get the file names. */
 	public List<String> getFileNames(String path) {
 		List<String> fileNames = new ArrayList<String>();
 		final Path currentWorkingPath = Paths.get(path).toAbsolutePath();
@@ -47,7 +49,7 @@ public class Guddengine {
 					}
 					return FileVisitResult.SKIP_SUBTREE;
 				}
-
+	
 				public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) {
 					// only process .json files
 					if (file.toString().endsWith(".json")) {
@@ -58,7 +60,7 @@ public class Guddengine {
 					}
 					return FileVisitResult.CONTINUE;
 				}
-
+	
 				// don't throw exceptions if files are locked/other errors occur.
 				public FileVisitResult visitFileFailed(Path file, IOException e) {
 					return FileVisitResult.CONTINUE;
@@ -70,14 +72,7 @@ public class Guddengine {
 		}
 		return fileNames;
 	}
-	
-	// ------------------------------------------------------------------------------------------------------
-	
-	/** Remove all the terms and types that have been indexed. */
-	public void resetIndex() {
-		this.BANK.reset();
-	}
-	
+
 	// ------------------------------------------------------------------------------------------------------
 	
 	/** Returns the file names that has been added from indexing the file that were in the given path. */
@@ -88,6 +83,42 @@ public class Guddengine {
 			System.out.println(e.toString());
 		}
 		return null;
+	}
+	
+	// ------------------------------------------------------------------------------------------------------
+	
+	/** Performs a ranked search with the given query. */
+	public List<PositionalPosting> rankedSearch(Query query) {
+		double[] scores = new double[this.docCount];
+		
+		SubQuery sq = query.getSubQueries().get(0);
+		List<PositionalPosting> result = new ArrayList<PositionalPosting>(10);
+		PriorityQueue<PositionalPosting> pq = new PriorityQueue<PositionalPosting>();
+		
+		for (String literal : sq.getLiterals())
+			processRankedLiteral(literal, scores);
+		
+		// Calculates final document for each document whose score is greater than zero 
+		for(int i = 0; i < scores.length; i++) {
+			if(scores[i] > 0) {
+				double score = scores[i] / this.BANK.getPositionalDiskInvertedIndex().getDocumentWeights(i);
+				pq.add(new PositionalPosting(i, null, score));
+			}
+		}
+		
+		// Adds PositionalPostings with the highest scores into the list
+		int priorityQueueSize = pq.size();
+		for (int i = 0; i < 10 && i < priorityQueueSize; i++) {
+			result.add(pq.poll());
+		}
+		return result;
+	}
+
+	// ------------------------------------------------------------------------------------------------------
+	
+	/** Remove all the terms and types that have been indexed. */
+	public void resetIndex() {
+		this.BANK.reset();
 	}
 	
 	// ------------------------------------------------------------------------------------------------------
@@ -104,32 +135,15 @@ public class Guddengine {
 		return result;
 	}
 	
-	public List<PositionalPosting> rankedSearch(Query query) {
-		double[] scores = new double[this.docCount];
-		
-		SubQuery sq = query.getSubQueries().get(0);
-		List<PositionalPosting> result = new ArrayList<PositionalPosting>(10);
-		PriorityQueue<PositionalPosting> pq = new PriorityQueue<PositionalPosting>();
-		
-		for (String literal : sq.getLiterals())
-			processRankedLiteral(literal, scores);
-		
-		for(int i = 0; i < scores.length; i++) {
-			if(scores[i] > 0) {
-				double score = scores[i] / this.BANK.getPositionalDiskInvertedIndex().getDocumentWeights(i);
-				pq.add(new PositionalPosting(i, null, score));
-			}
-		}
-		
-		int priorityQueueSize = pq.size();
-		for (int i = 0; i < 10 && i < priorityQueueSize; i++) {
-			result.add(pq.poll());
-		}
-		return result;
+	// ------------------------------------------------------------------------------------------------------
+	
+	/** Sets the disk indexes at the given path. */
+	public void setDiskIndexes(String path) {
+		this.BANK.setDiskIndexes(path);
 	}
 	
 	// ------------------------------------------------------------------------------------------------------
-	
+
 	/** Returns an array of String containing terms that have been added into the positional inverted index */
 	public String[] vocabulary() {
 		return this.BANK.getPositionalDiskInvertedIndex().getDictionary();
@@ -173,10 +187,8 @@ public class Guddengine {
 		return result;
 	}
 	
-	// ------------------------------------------------------------------------------------------------------
-	
-	// ------------------------------------------------------------------------------------------------------
-	
+	// -----------------------------------------------------------------------------------------------------
+
 	private List<PositionalPosting> intersect(List<List<PositionalPosting>> results) {
 		if (results.isEmpty()) return null;
 		
@@ -295,18 +307,21 @@ public class Guddengine {
 		return intersect(result);
 	}
 	// ------------------------------------------------------------------------------------------------------
+	
 	private void processRankedLiteral(String literal, double[] scores) {
 		String token = Normalizer.stem(Normalizer.normalize(literal));
 		List <PositionalPosting> postings = this.BANK.getPositionalDiskInvertedIndex().getPostings(token, false);
+		
 		if(postings == null || postings.isEmpty()) return;
+		
 		double queryWeight = Math.log(1 + ((double)this.docCount/postings.size()));
 		
+		// Calculates document score by multiplying wqt by wdt and adding it to the document's total score
 		for(PositionalPosting each : postings) 
 			scores[each.getId()] += queryWeight * each.getScore();
 		
 	}
 
-	
 	// ------------------------------------------------------------------------------------------------------
 	
 	private List<PositionalPosting> processLiteral(String literal) {
@@ -438,5 +453,4 @@ public class Guddengine {
 		
 		return result;
 	}
-
 }
